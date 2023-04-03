@@ -1,4 +1,5 @@
 import { Auction, AuctionHouseContractFunction } from '../../wrappers/nounsAuction';
+import { NounsUtilsContractFunction } from '../../wrappers/nounsUtils';
 import { useEthers, useContractFunction } from '@usedapp/core';
 import { connectContractToSigner } from '@usedapp/core/dist/cjs/src/hooks';
 import { useAppSelector } from '../../hooks';
@@ -10,7 +11,7 @@ import { Spinner, InputGroup, FormControl, Button, Col } from 'react-bootstrap';
 import { useAuctionMinBidIncPercentage } from '../../wrappers/nounsAuction';
 import { useAppDispatch } from '../../hooks';
 import { AlertModal, setAlertModal } from '../../state/slices/application';
-import { NounsAuctionHouseFactory } from '@nouns/sdk';
+import { NounsAuctionHouseFactory, NounsUtilsFactory } from '@nouns/sdk';
 import config from '../../config';
 import WalletConnectModal from '../WalletConnectModal';
 import SettleManuallyBtn from '../SettleManuallyBtn';
@@ -57,12 +58,15 @@ const Bid: React.FC<{
   const nounsAuctionHouseContract = new NounsAuctionHouseFactory().attach(
     config.addresses.nounsAuctionHouseProxy,
   );
+  const nounsUtilsContract = new NounsUtilsFactory().attach(config.addresses.nounsUtils);
 
   const account = useAppSelector(state => state.account.activeAccount);
 
   const bidInputRef = useRef<HTMLInputElement>(null);
+  const settleBidInputRef = useRef<HTMLInputElement>(null);
 
   const [bidInput, setBidInput] = useState('');
+  const [settleBidInput, setSettleBidInput] = useState('');
 
   const [bidButtonContent, setBidButtonContent] = useState({
     loading: false,
@@ -92,6 +96,10 @@ const Bid: React.FC<{
     nounsAuctionHouseContract,
     AuctionHouseContractFunction.settleCurrentAndCreateNewAuction,
   );
+  const { send: settleAndBidAuction, state: settleAndBidAuctionState } = useContractFunction(
+    nounsUtilsContract,
+    NounsUtilsContractFunction.settleCurrentCreateNewAuctionAndBid,
+  );
 
   const bidInputHandler = (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.target.value;
@@ -102,6 +110,17 @@ const Bid: React.FC<{
     }
 
     setBidInput(event.target.value);
+  };
+
+  const settleBidInputHandler = (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.target.value;
+
+    // disable more than 2 digits after decimal point
+    if (input.includes('.') && event.target.value.split('.')[1].length > 2) {
+      return;
+    }
+
+    setSettleBidInput(event.target.value);
   };
 
   const placeBidHandler = async () => {
@@ -137,6 +156,27 @@ const Bid: React.FC<{
 
   const settleAuctionHandler = () => {
     settleAuction();
+  };
+
+  const settleAndBidAuctionHandler = async () => {
+    if (!settleBidInputRef.current || !settleBidInputRef.current.value) {
+      return;
+    }
+
+    const value = utils.parseEther(settleBidInputRef.current.value.toString());
+    const contract = connectContractToSigner(nounsUtilsContract, undefined, library);
+
+    const gasLimit = await contract.estimateGas.settleCurrentCreateNewAuctionAndBid(
+      config.addresses.nounsAuctionHouseProxy,
+      auction.nounId.add(1),
+      {
+        value,
+      },
+    );
+    settleAndBidAuction(config.addresses.nounsAuctionHouseProxy, auction.nounId.add(1), {
+      value,
+      gasLimit: gasLimit.add(10_000), // A 10,000 gas pad is used to avoid 'Out of gas' errors
+    });
   };
 
   const clearBidInput = () => {
@@ -204,6 +244,7 @@ const Bid: React.FC<{
           loading: false,
           content: <Trans>Settle Auction</Trans>,
         });
+        setBidInput('');
         break;
       case 'Mining':
         setBidButtonContent({ loading: true, content: <></> });
@@ -281,7 +322,7 @@ const Bid: React.FC<{
             />
           </>
         )}
-        {!auctionEnded ? (
+        {!auctionEnded && (
           <Button
             className={auctionEnded ? classes.bidBtnAuctionEnded : classes.bidBtn}
             onClick={auctionEnded ? settleAuctionHandler : placeBidHandler}
@@ -289,22 +330,56 @@ const Bid: React.FC<{
           >
             {bidButtonContent.loading ? <Spinner animation="border" /> : bidButtonContent.content}
           </Button>
-        ) : (
-          <>
-            <Col lg={12} className={classes.voteForNextNounBtnWrapper}>
-              <Button className={classes.bidBtnAuctionEnded} onClick={fomoNounsBtnOnClickHandler}>
-                <Trans>Vote for the next Noun</Trans> ⌐◧-◧
-              </Button>
-            </Col>
-            {/* Only show force settle button if wallet connected */}
-            {isWalletConnected && (
-              <Col lg={12}>
-                <SettleManuallyBtn settleAuctionHandler={settleAuctionHandler} auction={auction} />
-              </Col>
-            )}
-          </>
         )}
       </InputGroup>
+      {auctionEnded && (
+        <>
+          <h4
+            style={{
+              color: 'var(--brand-cool-dark-text)',
+              marginTop: '20px',
+            }}
+            className={classes.startNextTitle}
+          >
+            Start and bid in the next auction (in the dark)
+          </h4>
+          <InputGroup>
+            <span className={classes.customPlaceholderBidAmt}>
+              <>Ξ 0.01 or + </>
+            </span>
+            <FormControl
+              className={classes.bidInput}
+              type="number"
+              min="0"
+              onChange={settleBidInputHandler}
+              ref={settleBidInputRef}
+              value={settleBidInput}
+            />
+            <Button
+              className={classes.bidBtn}
+              onClick={settleAndBidAuctionHandler}
+              disabled={isDisabled}
+            >
+              {bidButtonContent.loading ? (
+                <Spinner animation="border" />
+              ) : (
+                'Start next auction & bid'
+              )}
+            </Button>
+          </InputGroup>
+          {/* Only show force settle button if wallet connected */}
+          {isWalletConnected && (
+            <Col lg={12}>
+              <SettleManuallyBtn settleAuctionHandler={settleAuctionHandler} auction={auction} />
+            </Col>
+          )}
+        </>
+      )}
+      {/* <Col lg={12} className={classes.voteForNextNounBtnWrapper}>
+          <Button className={classes.bidBtnAuctionEnded} onClick={fomoNounsBtnOnClickHandler}>
+            <Trans>Vote for the next Noun</Trans> ⌐◧-◧
+          </Button>
+        </Col> */}
     </>
   );
 };

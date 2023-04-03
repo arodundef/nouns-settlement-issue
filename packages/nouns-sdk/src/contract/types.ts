@@ -4,6 +4,7 @@ import {
   NounsDescriptorFactory,
   NounsSeederFactory,
   NounsDaoLogicV2Factory,
+  NounsUtilsFactory,
 } from '@nouns/contracts';
 
 export interface ContractAddresses {
@@ -18,6 +19,7 @@ export interface ContractAddresses {
   nounsDAOProxy: string;
   nounsDAOLogicV1: string;
   nounsDAOLogicV2?: string;
+  nounsUtils: string;
 }
 
 export interface Contracts {
@@ -26,6 +28,7 @@ export interface Contracts {
   nounsDescriptorContract: ReturnType<typeof NounsDescriptorFactory.connect>;
   nounsSeederContract: ReturnType<typeof NounsSeederFactory.connect>;
   nounsDaoContract: ReturnType<typeof NounsDaoLogicV2Factory.connect>;
+  nounsUtils: ReturnType<typeof NounsUtilsFactory.connect>;
 }
 
 export enum ChainId {

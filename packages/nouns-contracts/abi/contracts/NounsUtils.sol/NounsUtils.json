@@ -1,0 +1,25 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenContractAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "nounId",
+        "type": "uint256"
+      }
+    ],
+    "name": "settleCurrentCreateNewAuctionAndBid",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  }
+]

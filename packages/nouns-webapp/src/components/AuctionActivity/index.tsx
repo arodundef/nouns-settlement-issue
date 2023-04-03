@@ -141,7 +141,7 @@ const AuctionActivity: React.FC<AuctionActivityProps> = (props: AuctionActivityP
             </Col>
           </Row>
         )}
-        {isLastAuction && (
+        {isLastAuction && !auctionEnded && (
           <>
             <Row className={classes.activityRow}>
               <Col lg={12}>
@@ -177,6 +177,15 @@ const AuctionActivity: React.FC<AuctionActivityProps> = (props: AuctionActivityP
               ))}
           </Col>
         </Row>
+        {isLastAuction && auctionEnded && (
+          <>
+            <Row className={classes.activityRow}>
+              <Col lg={12}>
+                <Bid auction={auction} auctionEnded={auctionEnded} />
+              </Col>
+            </Row>
+          </>
+        )}
       </AuctionActivityWrapper>
     </>
   );
