@@ -171,3 +171,9 @@
   margin: 0;
   padding: 0;
 }
+
+.startNextTitle {
+  font-family: 'PT Root UI';
+  font-weight: bold;
+  font-size: 18px;
+}
