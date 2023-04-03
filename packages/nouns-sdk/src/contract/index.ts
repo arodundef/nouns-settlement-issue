@@ -8,10 +8,12 @@ export {
   NounsSeederABI,
   NounsDAOABI,
   NounsDAOV2ABI,
+  NounsUtilsABI,
   NounsTokenFactory,
   NounsAuctionHouseFactory,
   NounsDescriptorFactory,
   NounsSeederFactory,
   NounsDaoLogicV1Factory,
   NounsDaoLogicV2Factory,
+  NounsUtilsFactory,
 } from '@nouns/contracts';

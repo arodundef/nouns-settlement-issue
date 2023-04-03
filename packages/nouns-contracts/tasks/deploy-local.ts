@@ -9,7 +9,8 @@ type LocalContractName =
   | 'NounsDAOLogicV2'
   | 'NounsDAOProxyV2'
   | 'WETH'
-  | 'Multicall2';
+  | 'Multicall2'
+  | 'NounsUtils';
 
 interface Contract {
   args?: (string | number | (() => string | undefined))[];
@@ -144,6 +145,7 @@ task('deploy-local', 'Deploy contracts to hardhat')
         waitForConfirmation: true,
       },
       Multicall2: {},
+      NounsUtils: {},
     };
 
     for (const [name, contract] of Object.entries(contracts)) {
