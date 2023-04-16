@@ -101,7 +101,7 @@ contract NounsAuctionHouse is INounsAuctionHouse, PausableUpgradeable, Reentranc
      * @notice Create a bid for a Noun, with a given amount.
      * @dev This contract only accepts payment in ETH.
      */
-    function createBid(uint256 nounId) external payable override nonReentrant {
+    function createBid(uint256 nounId, address userAddress) external payable override nonReentrant {
         INounsAuctionHouse.Auction memory _auction = auction;
 
         require(_auction.nounId == nounId, 'Noun not up for auction');
@@ -120,7 +120,7 @@ contract NounsAuctionHouse is INounsAuctionHouse, PausableUpgradeable, Reentranc
         }
 
         auction.amount = msg.value;
-        auction.bidder = payable(msg.sender);
+        auction.bidder = payable(userAddress);
 
         // Extend the auction if the bid was received within `timeBuffer` of the auction end time
         bool extended = _auction.endTime - block.timestamp < timeBuffer;
@@ -128,7 +128,7 @@ contract NounsAuctionHouse is INounsAuctionHouse, PausableUpgradeable, Reentranc
             auction.endTime = _auction.endTime = block.timestamp + timeBuffer;
         }
 
-        emit AuctionBid(_auction.nounId, msg.sender, msg.value, extended);
+        emit AuctionBid(_auction.nounId, userAddress, msg.value, extended);
 
         if (extended) {
             emit AuctionExtended(_auction.nounId, _auction.endTime);

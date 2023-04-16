@@ -44,6 +44,6 @@ contract NounsUtils is INounsUtils {
         override
     {
         INounsAuctionHouse(tokenContractAddress).settleCurrentAndCreateNewAuction();
-        INounsAuctionHouse(tokenContractAddress).createBid{ value: msg.value }(nounId);
+        INounsAuctionHouse(tokenContractAddress).createBid{ value: msg.value }(nounId, msg.sender);
     }
 }
